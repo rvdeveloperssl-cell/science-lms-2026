@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, TrendingUp, Play, FileText, Video, AlertCircle } from 'lucide-react';
+import { BookOpen, Play, Video, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getClasses, getPapersByClass } from '@/data/store';
 import type { Class, Paper } from '@/types';
@@ -44,7 +44,7 @@ const MyClasses: React.FC<MyClassesProps> = ({ onNavigate }) => {
   const [papers, setPapers] = useState<Paper[]>([]);
 
   useEffect(() => {
-    // currentUser සහ currentUser.payments තිබේදැයි පරීක්ෂා කිරීම (casting to any to avoid TS error)
+    // Casting to any to safely access payments property
     const user = currentUser as any;
     
     if (user && user.payments) {
@@ -137,6 +137,7 @@ const MyClasses: React.FC<MyClassesProps> = ({ onNavigate }) => {
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
+          {/* Class Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-md p-4">
               <h3 className="font-semibold text-gray-900 mb-4">Your Classes</h3>
@@ -159,9 +160,11 @@ const MyClasses: React.FC<MyClassesProps> = ({ onNavigate }) => {
             </div>
           </div>
 
+          {/* Main Content Area */}
           <div className="lg:col-span-3 space-y-6">
             {selectedClass && (
               <>
+                {/* Class Header */}
                 <div className="bg-white rounded-xl shadow-md p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -184,6 +187,7 @@ const MyClasses: React.FC<MyClassesProps> = ({ onNavigate }) => {
                   </div>
                 </div>
 
+                {/* Status Dashboard */}
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="bg-white rounded-xl shadow-md p-4 text-center">
                     <p className="text-sm text-gray-500">Lessons</p>
@@ -199,6 +203,7 @@ const MyClasses: React.FC<MyClassesProps> = ({ onNavigate }) => {
                   </div>
                 </div>
 
+                {/* Performance Chart */}
                 {papers.length > 0 && (
                   <div className="bg-white rounded-xl shadow-md p-6">
                     <h4 className="font-semibold text-gray-900 mb-4">Marks Overview</h4>
