@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, GraduationCap, Save, ShieldCheck, UserCircle, Edit2, Copy, Check, QrCode, Download } from 'lucide-react';
+import { Save, ShieldCheck, UserCircle, Edit2, Copy, Check, QrCode, Download, User, Mail, Phone, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const Profile: React.FC = () => {
@@ -16,7 +16,6 @@ const Profile: React.FC = () => {
     grade: currentUser?.grade || 'Grade 10',
   });
 
-  // Student ID එක QR එකක් විදියට ගන්න URL එක
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${currentUser?.id}`;
 
   const copyToClipboard = () => {
@@ -63,7 +62,6 @@ const Profile: React.FC = () => {
       <div className="container-custom max-w-3xl">
         <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100">
           
-          {/* Profile Header */}
           <div className="bg-gradient-to-r from-blue-700 to-indigo-800 px-8 py-10 text-center relative">
             <div className="relative inline-block">
               <div className="w-28 h-28 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
@@ -88,7 +86,6 @@ const Profile: React.FC = () => {
                 </button>
               </div>
               
-              {/* QR Code Button */}
               <button 
                 onClick={() => setShowQR(!showQR)}
                 className="mt-2 flex items-center gap-2 bg-white text-blue-800 px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-50 transition-all"
@@ -99,9 +96,8 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="p-8">
-            {/* QR Code Display Area */}
             {showQR && (
-              <div className="mb-8 p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 flex flex-col items-center animate-in fade-in zoom-in duration-300">
+              <div className="mb-8 p-6 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-200 flex flex-col items-center">
                 <h4 className="text-blue-800 font-bold mb-4 flex items-center gap-2">
                   <QrCode className="w-5 h-5" /> Your Digital ID Card QR
                 </h4>
@@ -114,9 +110,6 @@ const Profile: React.FC = () => {
                 >
                   <Download className="w-4 h-4" /> Download QR to Phone
                 </button>
-                <p className="text-[10px] text-gray-500 mt-3 text-center">
-                  Show this QR code at the class entrance to mark your attendance.
-                </p>
               </div>
             )}
 
@@ -130,11 +123,11 @@ const Profile: React.FC = () => {
             <form onSubmit={handleSave} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-bold text-gray-600 mb-2 block">Full Name</label>
+                  <label className="text-sm font-bold text-gray-600 mb-2 flex items-center gap-2"><User className="w-4 h-4" /> Full Name</label>
                   <input type="text" value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="form-input" required />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-600 mb-2 block">Grade</label>
+                  <label className="text-sm font-bold text-gray-600 mb-2 flex items-center gap-2"><GraduationCap className="w-4 h-4" /> Grade</label>
                   <select className="form-input" value={formData.grade} onChange={(e) => setFormData({...formData, grade: e.target.value})}>
                     <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option>
                     <option>Grade 9</option><option>Grade 10</option><option>Grade 11</option>
@@ -143,11 +136,11 @@ const Profile: React.FC = () => {
               </div>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-bold text-gray-600 mb-2 block">Mobile Number</label>
+                  <label className="text-sm font-bold text-gray-600 mb-2 flex items-center gap-2"><Phone className="w-4 h-4" /> Mobile Number</label>
                   <input type="tel" value={formData.mobileNumber} onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})} className="form-input" required />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-600 mb-2 block">Email Address</label>
+                  <label className="text-sm font-bold text-gray-600 mb-2 flex items-center gap-2"><Mail className="w-4 h-4" /> Email Address</label>
                   <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="form-input" required />
                 </div>
               </div>
