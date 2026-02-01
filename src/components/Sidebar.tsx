@@ -7,7 +7,7 @@ import React from 'react';
 import { 
   X, Home, User, BookOpen, Video, Calendar, FileText, 
   LogIn, LayoutDashboard, UserCog, Phone, GraduationCap,
-  ShoppingBag, ClipboardList
+  ShoppingBag, ClipboardList, UserCircle
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -37,6 +37,7 @@ const menuItems: MenuItem[] = [
   { id: 'login', label: 'Student Login / Register', icon: LogIn },
   { id: 'dashboard', label: 'Student Dashboard', icon: LayoutDashboard, requiresAuth: true },
   { id: 'my-classes', label: 'My Classes', icon: BookOpen, requiresAuth: true },
+  { id: 'profile', label: 'My Profile', icon: UserCircle, requiresAuth: true }, // Profile එක Menu එකටත් දැම්මා
   { id: 'teacher-panel', label: 'Teacher Panel', icon: UserCog, requiresAdmin: true },
   { id: 'admin', label: 'Admin Dashboard', icon: ClipboardList, requiresAdmin: true },
   { id: 'contact', label: 'Contact Page', icon: Phone },
@@ -117,32 +118,36 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, currentP
           })}
         </nav>
         
-        {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700 bg-blue-900/50">
+        {/* Footer - මෙතනින් තමයි Profile එකට යන්නේ */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700 bg-blue-900/50 cursor-pointer hover:bg-blue-800 transition-colors"
+          onClick={() => currentUser ? handleNavigation('profile') : null}
+        >
           {currentUser ? (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-sm">
                   {currentUser.fullName.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-medium truncate">{currentUser.fullName}</p>
-                <p className="text-blue-300 text-xs">{currentUser.id}</p>
+                <p className="text-blue-300 text-xs font-mono">{currentUser.id}</p>
               </div>
+              <UserCircle className="w-5 h-5 text-blue-300" />
             </div>
           ) : isAdmin ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" onClick={() => handleNavigation('admin')}>
               <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
                 <UserCog className="w-5 h-5 text-white" />
               </div>
               <div>
                 <p className="text-white text-sm font-medium">Admin User</p>
-                <p className="text-blue-300 text-xs">Full Access</p>
+                <p className="text-blue-300 text-xs">Full Access Control</p>
               </div>
             </div>
           ) : (
-            <p className="text-blue-300 text-xs text-center">Please login to access your account</p>
+            <p className="text-blue-300 text-xs text-center py-2">Welcome to SK Academy</p>
           )}
         </div>
       </div>
