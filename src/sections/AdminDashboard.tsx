@@ -22,29 +22,29 @@ import {
   addClass, addLesson, addPaper, getStudentById,
   addLiveClass, getLiveClasses
 } from '@/data/store';
-import type { Student, Class, Payment, Notice, LiveClass, Lesson } from '@/types';
+import type { Student, Class, Payment, Notice, LiveClass } from '@/types';
 
 interface AdminDashboardProps {
   onNavigate: (page: string) => void;
 }
 
-// Extended types for additional properties
-interface ExtendedClass extends Class {
+// Extended types using intersection instead of extension to avoid conflicts
+type ExtendedClass = Class & {
   month?: string;
   pdfs?: any[];
   recordings?: any[];
   zoomLinks?: any[];
   lessons?: any[];
-}
+};
 
-interface ExtendedLiveClass extends LiveClass {
+type ExtendedLiveClass = LiveClass & {
   scheduledAt?: string;
   zoomLink?: string;
   enrolledOnly?: boolean;
   grade?: number;
   duration?: string;
   title?: string;
-}
+};
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
   const { isAdmin, logout } = useAuth();
@@ -143,8 +143,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
 
   // Activate student manually
   const handleActivateStudent = (studentId: string) => {
-    // Use updateStudent instead of updateStudentStatus
-    // updateStudent(studentId, { isActive: true });
     console.log('Activating student:', studentId);
     refreshData();
     if (selectedStudent?.id === studentId) {
@@ -229,7 +227,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
   const handleAddLesson = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const isFree = formData.get('isFree') === 'on';
     
     const lessonData: any = {
       classId: formData.get('classId') as string,
@@ -244,7 +241,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
 
     const month = formData.get('month') as string;
     if (month) lessonData.month = month;
-    if (isFree) lessonData.isFree = true;
     
     addLesson(lessonData);
     setShowAddLesson(false);
@@ -586,7 +582,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
             </div>
           )}
 
-          {/* Classes - Enhanced with Monthly Content */}
+          {/* Classes */}
           {activeTab === 'classes' && (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -1078,7 +1074,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Add Class Modal - Enhanced with Month Selection */}
+      {/* Add Class Modal */}
       {showAddClass && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
@@ -1147,7 +1143,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Add Content Modal (PDF, Recording, Zoom, Tutorial) */}
+      {/* Add Content Modal */}
       {showAddContent && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
@@ -1249,7 +1245,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Add Lesson Modal - Enhanced with Free Lesson option */}
+      {/* Add Lesson Modal */}
       {showAddLesson && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
@@ -1370,7 +1366,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Add Marks Modal - Enhanced */}
+      {/* Add Marks Modal */}
       {showAddMarks && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
