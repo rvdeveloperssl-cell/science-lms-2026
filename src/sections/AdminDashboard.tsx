@@ -37,8 +37,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
   const [showAddPaper, setShowAddPaper] = useState(false);
   const [showAddLiveClass, setShowAddLiveClass] = useState(false);
   const [showUpdateAccess, setShowUpdateAccess] = useState(false);
-  const [showAddPaperMarks, setShowAddPaperMarks] = useState(false);
-  
+
   useEffect(() => {
     if (isAdmin) {
       refreshData();
@@ -157,9 +156,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
                           </span>
                         </td>
                         <td className="p-3">
-                           <span className={s.isActive ? "text-green-500" : "text-red-500"}>
-                             {s.isActive ? "Full Access" : "Expired/Inactive"}
-                           </span>
+                            <span className={s.isActive ? "text-green-500" : "text-red-500"}>
+                              {s.isActive ? "Full Access" : "Expired/Inactive"}
+                            </span>
                         </td>
                       </tr>
                     ))}
@@ -181,9 +180,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
                   <button onClick={() => setShowAddLesson(true)} className="btn-secondary flex items-center gap-2 text-sm">
                     <FileText className="w-4 h-4" /> Add Lesson/PDF
                   </button>
-                  <button onClick={() => setShowAddPaperMarks(true)} className="btn-secondary flex items-center gap-2 text-sm bg-purple-50 border-purple-200 text-purple-700">
-  <TrendingUp className="w-4 h-4" /> Add Paper Marks
-</button>
                 </div>
               </div>
               {/* Class List Table */}
@@ -326,90 +322,5 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
     </section>
   );
 };
-
-{/* 5. ADD PAPER MARKS MODAL */}
-{showAddPaperMarks && (
-  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
-      <div className="flex items-center gap-2 mb-6 text-purple-700">
-        <TrendingUp className="w-6 h-6" />
-        <h3 className="text-xl font-bold">Add Student Marks</h3>
-      </div>
-      
-      <form className="space-y-4" onSubmit={(e) => {
-        e.preventDefault();
-        // Logic to save marks
-        alert("Marks saved successfully!");
-        setShowAddPaperMarks(false);
-      }}>
-        {/* Student ID */}
-        <div>
-          <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Student ID</label>
-          <input 
-            placeholder="e.g. ST1005" 
-            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" 
-            required 
-          />
-        </div>
-
-        {/* Select Class */}
-        <div>
-          <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Select Class</label>
-          <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
-            <option>Choose Class...</option>
-            {classes.map(c => <option key={c.id} value={c.id}>{c.name} (G-{c.grade})</option>)}
-          </select>
-        </div>
-
-        {/* Paper Name */}
-        <div>
-          <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Paper Name / ID</label>
-          <input 
-            placeholder="e.g. Paper 01 - Mechanics" 
-            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none" 
-            required 
-          />
-        </div>
-
-        {/* Marks Input */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Marks (%)</label>
-            <input 
-              type="number" 
-              placeholder="85" 
-              className="w-full p-3 bg-purple-50 border border-purple-200 rounded-xl text-purple-700 font-bold text-lg outline-none" 
-              required 
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Grade</label>
-            <input 
-              placeholder="A" 
-              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-center font-bold" 
-            />
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex gap-3 pt-4">
-          <button 
-            type="button" 
-            onClick={() => setShowAddPaperMarks(false)} 
-            className="flex-1 py-3 text-gray-500 font-semibold hover:bg-gray-100 rounded-xl transition-colors"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit" 
-            className="flex-1 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 shadow-lg shadow-purple-200 transition-all"
-          >
-            Save Result
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
 
 export default AdminDashboard;
