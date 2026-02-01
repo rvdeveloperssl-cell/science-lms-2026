@@ -27,6 +27,7 @@ import AdminDashboard from '@/sections/AdminDashboard';
 import Payment from '@/sections/Payment';
 import Contact from '@/sections/Contact';
 import Footer from '@/sections/Footer';
+import Profile from '@/sections/Profile'; // <--- අලුතින් එකතු කළා
 
 // ============================================
 // MAIN APP CONTENT
@@ -145,6 +146,16 @@ const AppContent: React.FC = () => {
           <>
             <div className="pt-20" />
             <MyClasses onNavigate={handleNavigate} />
+            <Footer onNavigate={handleNavigate} />
+          </>
+        );
+
+      // --- Profile Page එක මෙතනට එකතු කළා ---
+      case 'profile':
+        return (
+          <>
+            <div className="pt-20" />
+            <Profile />
             <Footer onNavigate={handleNavigate} />
           </>
         );
