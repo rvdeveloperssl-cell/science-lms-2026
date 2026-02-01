@@ -22,7 +22,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     mobileNumber: '',
     email: '',
     nicNumber: '',
-    grade: 'Grade 10',
+    grade: 'Grade 6',
     parentName: '',
     parentNumber: '',
     password: '',
@@ -82,10 +82,9 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           text: `Registration Successful! Your Student ID: ${result.studentId}. Please login now.` 
         });
         
-        // --- මෙන්න මෙතනින් තමයි Register එක වහලා Login එකට හරවන්නේ ---
         setTimeout(() => {
-          setActiveTab('student'); // Login tab එකට මාරු කරනවා
-          setLoginData({ ...loginData, studentId: result.studentId || '' }); // ID එක auto පිරවෙනවා
+          setActiveTab('student');
+          setLoginData({ ...loginData, studentId: result.studentId || '' });
           setMessage(null);
         }, 3000);
       } else {
@@ -137,7 +136,20 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 <div><label className="text-sm font-bold text-gray-700 mb-1 block">Email Address</label><div className="relative"><Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400"/><input type="email" placeholder="example@mail.com" className="form-input pl-10" required value={registerData.email} onChange={e => setRegisterData({...registerData, email: e.target.value})} /></div></div>
               </div>
 
-              <div><label className="text-sm font-bold text-gray-700 mb-1 block">Grade</label><div className="relative"><GraduationCap className="absolute left-3 top-3 w-4 h-4 text-gray-400"/><select className="form-input pl-10" value={registerData.grade} onChange={e => setRegisterData({...registerData, grade: e.target.value})}><option>Grade 10</option><option>Grade 11</option><option>Revision</option></select></div></div>
+              <div>
+                <label className="text-sm font-bold text-gray-700 mb-1 block">Grade</label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-3 w-4 h-4 text-gray-400"/>
+                  <select className="form-input pl-10" value={registerData.grade} onChange={e => setRegisterData({...registerData, grade: e.target.value})}>
+                    <option value="Grade 6">Grade 6</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                  </select>
+                </div>
+              </div>
 
               <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-4">
                 <h3 className="flex items-center gap-2 font-bold text-blue-800"><Users className="w-5 h-5"/> Parents' Details</h3>
