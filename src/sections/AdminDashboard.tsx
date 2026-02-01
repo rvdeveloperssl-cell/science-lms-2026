@@ -13,7 +13,7 @@ import {
   Users, BookOpen, CreditCard, Bell, Plus, Trash2, 
   CheckCircle, XCircle, TrendingUp, Search, Calendar,
   Video, FileText, Link as LinkIcon, Clock,
-  ChevronDown, ChevronUp, Download, Unlock
+  ChevronDown, ChevronUp, Download, Unlock, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -28,7 +28,6 @@ interface AdminDashboardProps {
   onNavigate: (page: string) => void;
 }
 
-// Extended types using intersection instead of extension to avoid conflicts
 type ExtendedClass = Class & {
   month?: string;
   pdfs?: any[];
@@ -56,26 +55,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [liveClasses, setLiveClasses] = useState<ExtendedLiveClass[]>([]);
   
-  // Refs for scrolling
+  // Refs for scrolling to forms
+  const formRef = useRef<HTMLDivElement>(null);
   const tabContentRef = useRef<HTMLDivElement>(null);
   
-  // Form states
-  const [showAddClass, setShowAddClass] = useState(false);
-  const [showAddNotice, setShowAddNotice] = useState(false);
-  const [showAddLesson, setShowAddLesson] = useState(false);
-  const [showAddLiveClass, setShowAddLiveClass] = useState(false);
-  const [showStudentProfile, setShowStudentProfile] = useState(false);
-  const [showAddMarks, setShowAddMarks] = useState(false);
-  const [showAddContent, setShowAddContent] = useState(false);
-  const [showActivateStudent, setShowActivateStudent] = useState(false);
-
+  // Single state to track which form is active (instead of multiple booleans)
+  const [activeForm, setActiveForm] = useState<string | null>(null);
+  
   // Selected data
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [searchStudentId, setSearchStudentId] = useState('');
   const [studentStats, setStudentStats] = useState<any>(null);
-
-  // Content management state
   const [contentType, setContentType] = useState<'pdf' | 'recording' | 'zoom' | 'tutorial'>('pdf');
   const [expandedClass, setExpandedClass] = useState<string | null>(null);
 
@@ -99,12 +90,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
     setLiveClasses(getLiveClasses() as ExtendedLiveClass[]);
   };
 
-  // Scroll to tab content when tab changes
+  // Auto-scroll to form when it opens
   useEffect(() => {
-    if (tabContentRef.current && activeTab !== 'overview') {
-      tabContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (activeForm && formRef.current) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
-  }, [activeTab]);
+  }, [activeForm]);
 
   if (!isAdmin) {
     return (
@@ -123,12 +116,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
     );
   }
 
-  // View Student Profile
   const handleViewStudent = (studentId: string) => {
     const student = getStudentById(studentId);
     if (student) {
       setSelectedStudent(student);
-      // Mock stats - replace with actual API call if available
       const stats = {
         totalLogins: 15,
         lastActive: new Date().toLocaleDateString(),
@@ -137,11 +128,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
         expiredClasses: []
       };
       setStudentStats(stats);
-      setShowStudentProfile(true);
+      setActiveForm('profile');
     }
   };
 
-  // Activate student manually
   const handleActivateStudent = (studentId: string) => {
     console.log('Activating student:', studentId);
     refreshData();
@@ -150,19 +140,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
     }
   };
 
-  // Approve payment
   const handleApprovePayment = (paymentId: string) => {
     updatePaymentStatus(paymentId, 'completed');
     refreshData();
   };
 
-  // Reject payment
   const handleRejectPayment = (paymentId: string) => {
     updatePaymentStatus(paymentId, 'failed');
     refreshData();
   };
 
-  // Add new class with month selection
   const handleAddClass = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -180,22 +167,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
       lessons: []
     };
 
-    // Only add month if your store supports it
     if (month) {
       classData.month = month;
     }
     
     addClass(classData);
-    setShowAddClass(false);
+    setActiveForm(null);
     refreshData();
   };
 
-  // Add content to class (PDF, Recording, Zoom, Tutorial)
   const handleAddContent = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    // Handle content addition based on type
     console.log('Adding content:', {
       classId: formData.get('classId'),
       month: formData.get('contentMonth'),
@@ -205,11 +189,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
       unit: formData.get('unit')
     });
     
-    setShowAddContent(false);
+    setActiveForm(null);
     refreshData();
   };
 
-  // Add notice
   const handleAddNotice = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -219,11 +202,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
       type: formData.get('type') as 'general' | 'urgent' | 'payment',
       expiresAt: formData.get('expiresAt') as string
     });
-    setShowAddNotice(false);
+    setActiveForm(null);
     refreshData();
   };
 
-  // Add lesson (Free or Paid)
   const handleAddLesson = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -243,11 +225,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
     if (month) lessonData.month = month;
     
     addLesson(lessonData);
-    setShowAddLesson(false);
+    setActiveForm(null);
     refreshData();
   };
 
-  // Add Live Class
   const handleAddLiveClass = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -260,7 +241,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
       isActive: true
     };
 
-    // Optional fields
     const zoomLink = formData.get('zoomLink') as string;
     const grade = formData.get('grade') as string;
     const enrolledOnly = formData.get('enrolledOnly') === 'on';
@@ -270,11 +250,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
     if (enrolledOnly) liveClassData.enrolledOnly = enrolledOnly;
     
     addLiveClass(liveClassData);
-    setShowAddLiveClass(false);
+    setActiveForm(null);
     refreshData();
   };
 
-  // Add paper/marks
   const handleAddPaper = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -293,11 +272,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
       maxMarks: Number(formData.get('maxMarks')),
       studentMarks: [studentMark]
     });
-    setShowAddMarks(false);
+    setActiveForm(null);
     refreshData();
   };
 
-  // Search student for marks
   const handleSearchStudent = () => {
     const student = getStudentById(searchStudentId);
     if (student) {
@@ -313,6 +291,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
     }
   };
 
+  const QuickAction = ({ icon: Icon, label, color, onClick }: { icon: any, label: string, color: string, onClick: () => void }) => (
+    <button 
+      onClick={onClick}
+      className={`p-4 ${color} rounded-lg hover:opacity-90 transition-all transform hover:scale-105 text-center shadow-sm hover:shadow-md`}
+    >
+      <Icon className="w-8 h-8 mx-auto mb-2 opacity-80" />
+      <span className="text-sm font-medium text-gray-800">{label}</span>
+    </button>
+  );
+
   return (
     <section className="section-padding bg-gray-50 min-h-screen">
       <div className="container-custom">
@@ -325,7 +313,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => setShowActivateStudent(true)}
+                onClick={() => setActiveForm('activate')}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
               >
                 <Unlock className="w-4 h-4" />
@@ -407,7 +395,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => { setActiveTab(tab.id); setActiveForm(null); }}
                 className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
                   activeTab === tab.id 
                     ? 'bg-blue-600 text-white' 
@@ -421,62 +409,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
           })}
         </div>
 
-        {/* Tab Content */}
+        {/* Main Content Container */}
         <div ref={tabContentRef} className="bg-white rounded-xl shadow-md p-6">
           {/* Overview */}
-          {activeTab === 'overview' && (
+          {activeTab === 'overview' && !activeForm && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
               <div className="grid md:grid-cols-4 gap-4">
-                <button 
-                  onClick={() => { setActiveTab('classes'); setShowAddClass(true); }}
-                  className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-center"
-                >
-                  <Plus className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Add Class</span>
-                </button>
-                <button 
-                  onClick={() => { setActiveTab('classes'); setShowAddLesson(true); }}
-                  className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-center"
-                >
-                  <BookOpen className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Add Lesson</span>
-                </button>
-                <button 
-                  onClick={() => { setActiveTab('live-classes'); setShowAddLiveClass(true); }}
-                  className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors text-center"
-                >
-                  <Video className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Live Class</span>
-                </button>
-                <button 
-                  onClick={() => { setActiveTab('marks'); setShowAddMarks(true); }}
-                  className="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors text-center"
-                >
-                  <FileText className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Add Marks</span>
-                </button>
-                <button 
-                  onClick={() => setShowAddNotice(true)}
-                  className="p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors text-center"
-                >
-                  <Bell className="w-8 h-8 text-amber-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Post Notice</span>
-                </button>
-                <button 
-                  onClick={() => setShowAddContent(true)}
-                  className="p-4 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors text-center"
-                >
-                  <Download className="w-8 h-8 text-pink-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Add PDF/Zoom</span>
-                </button>
-                <button 
-                  onClick={() => setShowActivateStudent(true)}
-                  className="p-4 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors text-center"
-                >
-                  <Unlock className="w-8 h-8 text-teal-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Activate Student</span>
-                </button>
+                <QuickAction 
+                  icon={Plus} 
+                  label="Add Class" 
+                  color="bg-blue-50 hover:bg-blue-100 text-blue-600"
+                  onClick={() => setActiveForm('class')}
+                />
+                <QuickAction 
+                  icon={BookOpen} 
+                  label="Add Lesson" 
+                  color="bg-green-50 hover:bg-green-100 text-green-600"
+                  onClick={() => setActiveForm('lesson')}
+                />
+                <QuickAction 
+                  icon={Video} 
+                  label="Live Class" 
+                  color="bg-purple-50 hover:bg-purple-100 text-purple-600"
+                  onClick={() => setActiveForm('live')}
+                />
+                <QuickAction 
+                  icon={FileText} 
+                  label="Add Marks" 
+                  color="bg-orange-50 hover:bg-orange-100 text-orange-600"
+                  onClick={() => setActiveForm('marks')}
+                />
+                <QuickAction 
+                  icon={Bell} 
+                  label="Post Notice" 
+                  color="bg-amber-50 hover:bg-amber-100 text-amber-600"
+                  onClick={() => setActiveForm('notice')}
+                />
+                <QuickAction 
+                  icon={Download} 
+                  label="Add PDF/Zoom" 
+                  color="bg-pink-50 hover:bg-pink-100 text-pink-600"
+                  onClick={() => { setContentType('pdf'); setActiveForm('content'); }}
+                />
+                <QuickAction 
+                  icon={Unlock} 
+                  label="Activate Student" 
+                  color="bg-teal-50 hover:bg-teal-100 text-teal-600"
+                  onClick={() => setActiveForm('activate')}
+                />
               </div>
 
               {/* Recent Activity Summary */}
@@ -485,7 +466,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
                   <h4 className="font-semibold text-gray-900 mb-4">Recent Payments</h4>
                   <div className="space-y-3">
                     {payments.slice(0, 5).map((payment) => (
-                      <div key={payment.id} className="flex justify-between items-center text-sm">
+                      <div key={payment.id} className="flex justify-between items-center text-sm bg-white p-2 rounded">
                         <span>{payment.studentId}</span>
                         <span className={`px-2 py-1 rounded text-xs ${
                           payment.status === 'completed' ? 'bg-green-100 text-green-700' :
@@ -506,9 +487,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
                       .filter(l => l.scheduledAt && new Date(l.scheduledAt) > new Date())
                       .slice(0, 5)
                       .map((live) => (
-                      <div key={live.id} className="flex justify-between items-center text-sm">
+                      <div key={live.id} className="flex justify-between items-center text-sm bg-white p-2 rounded">
                         <span>{live.title}</span>
-                        <span className="text-blue-600">
+                        <span className="text-blue-600 text-xs">
                           {live.scheduledAt ? new Date(live.scheduledAt).toLocaleDateString() : 'N/A'}
                         </span>
                       </div>
@@ -520,7 +501,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
           )}
 
           {/* Students */}
-          {activeTab === 'students' && (
+          {activeTab === 'students' && !activeForm && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">All Students ({students.length})</h3>
@@ -583,12 +564,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
           )}
 
           {/* Classes */}
-          {activeTab === 'classes' && (
+          {activeTab === 'classes' && !activeForm && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">All Classes ({classes.length})</h3>
                 <button 
-                  onClick={() => setShowAddClass(true)}
+                  onClick={() => setActiveForm('class')}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
                 >
                   <Plus className="w-4 h-4" />
@@ -622,44 +603,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
                     {expandedClass === classData.id && (
                       <div className="p-4 bg-white space-y-4">
                         <div className="grid md:grid-cols-4 gap-4">
-                          <div className="bg-blue-50 p-3 rounded-lg">
+                          <div className="bg-blue-50 p-3 rounded-lg text-center">
                             <h5 className="font-medium text-blue-900 mb-2">Lessons</h5>
                             <p className="text-2xl font-bold text-blue-600">{extClass.lessons?.length || 0}</p>
                             <button 
-                              onClick={() => { setSelectedClass(classData); setShowAddLesson(true); }}
+                              onClick={() => { setSelectedClass(classData); setActiveForm('lesson'); }}
                               className="text-sm text-blue-600 mt-2 hover:underline"
                             >
                               + Add Lesson
                             </button>
                           </div>
                           
-                          <div className="bg-purple-50 p-3 rounded-lg">
+                          <div className="bg-purple-50 p-3 rounded-lg text-center">
                             <h5 className="font-medium text-purple-900 mb-2">PDFs</h5>
                             <p className="text-2xl font-bold text-purple-600">{extClass.pdfs?.length || 0}</p>
                             <button 
-                              onClick={() => { setSelectedClass(classData); setContentType('pdf'); setShowAddContent(true); }}
+                              onClick={() => { setSelectedClass(classData); setContentType('pdf'); setActiveForm('content'); }}
                               className="text-sm text-purple-600 mt-2 hover:underline"
                             >
                               + Add PDF
                             </button>
                           </div>
                           
-                          <div className="bg-green-50 p-3 rounded-lg">
+                          <div className="bg-green-50 p-3 rounded-lg text-center">
                             <h5 className="font-medium text-green-900 mb-2">Recordings</h5>
                             <p className="text-2xl font-bold text-green-600">{extClass.recordings?.length || 0}</p>
                             <button 
-                              onClick={() => { setSelectedClass(classData); setContentType('recording'); setShowAddContent(true); }}
+                              onClick={() => { setSelectedClass(classData); setContentType('recording'); setActiveForm('content'); }}
                               className="text-sm text-green-600 mt-2 hover:underline"
                             >
                               + Add Recording
                             </button>
                           </div>
                           
-                          <div className="bg-orange-50 p-3 rounded-lg">
+                          <div className="bg-orange-50 p-3 rounded-lg text-center">
                             <h5 className="font-medium text-orange-900 mb-2">Zoom Links</h5>
                             <p className="text-2xl font-bold text-orange-600">{extClass.zoomLinks?.length || 0}</p>
                             <button 
-                              onClick={() => { setSelectedClass(classData); setContentType('zoom'); setShowAddContent(true); }}
+                              onClick={() => { setSelectedClass(classData); setContentType('zoom'); setActiveForm('content'); }}
                               className="text-sm text-orange-600 mt-2 hover:underline"
                             >
                               + Add Zoom
@@ -683,13 +664,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
             </div>
           )}
 
-          {/* Live Classes Tab */}
-          {activeTab === 'live-classes' && (
+          {/* Live Classes */}
+          {activeTab === 'live-classes' && !activeForm && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Live Classes</h3>
                 <button 
-                  onClick={() => setShowAddLiveClass(true)}
+                  onClick={() => setActiveForm('live')}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center gap-2 hover:bg-purple-700"
                 >
                   <Plus className="w-4 h-4" />
@@ -743,7 +724,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
           )}
 
           {/* Payments */}
-          {activeTab === 'payments' && (
+          {activeTab === 'payments' && !activeForm && (
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Payments</h3>
               <div className="overflow-x-auto">
@@ -791,12 +772,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
           )}
 
           {/* Marks & Papers */}
-          {activeTab === 'marks' && (
+          {activeTab === 'marks' && !activeForm && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Marks Management</h3>
                 <button 
-                  onClick={() => setShowAddMarks(true)}
+                  onClick={() => setActiveForm('marks')}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
                 >
                   <Plus className="w-4 h-4" />
@@ -825,24 +806,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
               </div>
 
               {selectedStudent && studentStats && (
-                <div className="bg-white border rounded-lg p-6 mb-6">
+                <div className="bg-white border rounded-lg p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h4 className="text-xl font-bold text-gray-900">{selectedStudent.fullName}</h4>
                       <p className="text-gray-600">ID: {selectedStudent.id} | Grade: {selectedStudent.grade}</p>
-                      <p className="text-gray-600">{selectedStudent.email}</p>
                     </div>
-                    <div className="text-right">
-                      <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
-                        selectedStudent.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {selectedStudent.isActive ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                        {selectedStudent.isActive ? 'Active' : 'Inactive'}
-                      </div>
+                    <div className={`px-3 py-1 rounded-full text-sm ${
+                      selectedStudent.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {selectedStudent.isActive ? 'Active' : 'Inactive'}
                     </div>
                   </div>
                   
-                  <div className="grid md:grid-cols-4 gap-4 mb-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div className="bg-blue-50 p-3 rounded-lg text-center">
                       <p className="text-sm text-gray-600">Total Logins</p>
                       <p className="text-2xl font-bold text-blue-600">{studentStats.totalLogins}</p>
@@ -860,59 +837,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
                       <p className="text-2xl font-bold text-orange-600">{studentStats.papersCount}</p>
                     </div>
                   </div>
-                  
-                  {studentStats.expiredClasses?.length > 0 && (
-                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <h5 className="font-medium text-red-900 mb-2">Expired Classes (40+ days)</h5>
-                      <div className="space-y-2">
-                        {studentStats.expiredClasses.map((cls: any) => (
-                          <div key={cls.id} className="flex justify-between items-center bg-white p-2 rounded">
-                            <span className="text-sm">{cls.name}</span>
-                            <button 
-                              onClick={() => handleActivateStudent(selectedStudent.id)}
-                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                            >
-                              Reactivate
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-4">
-                    <h5 className="font-medium text-gray-900 mb-2">Recent Marks</h5>
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-3 py-2 text-left">Paper</th>
-                          <th className="px-3 py-2 text-left">Marks</th>
-                          <th className="px-3 py-2 text-left">Grade</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {studentStats.recentMarks?.map((mark: any, idx: number) => (
-                          <tr key={idx}>
-                            <td className="px-3 py-2">{mark.paperName}</td>
-                            <td className="px-3 py-2">{mark.marks}/{mark.maxMarks}</td>
-                            <td className="px-3 py-2">{mark.grade}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
                 </div>
               )}
             </div>
           )}
 
           {/* Notices */}
-          {activeTab === 'notices' && (
+          {activeTab === 'notices' && !activeForm && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Notices ({notices.length})</h3>
                 <button 
-                  onClick={() => setShowAddNotice(true)}
+                  onClick={() => setActiveForm('notice')}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
                 >
                   <Plus className="w-4 h-4" />
@@ -931,20 +867,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-gray-900">{notice.title}</h4>
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            notice.type === 'urgent' ? 'bg-red-200 text-red-800' :
-                            notice.type === 'payment' ? 'bg-amber-200 text-amber-800' :
-                            'bg-blue-200 text-blue-800'
-                          }`}>
-                            {notice.type}
-                          </span>
-                        </div>
+                        <h4 className="font-medium text-gray-900">{notice.title}</h4>
                         <p className="text-sm text-gray-600 mt-1">{notice.message}</p>
                         <p className="text-xs text-gray-400 mt-2">
-                          {new Date(notice.createdAt).toLocaleDateString()} 
-                          {notice.expiresAt && ` • Expires: ${new Date(notice.expiresAt).toLocaleDateString()}`}
+                          {new Date(notice.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <button
@@ -960,154 +886,51 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Student Profile Modal */}
-      {showStudentProfile && selectedStudent && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">{selectedStudent.fullName}</h3>
-                <p className="text-gray-600">{selectedStudent.email}</p>
-              </div>
-              <button onClick={() => setShowStudentProfile(false)} className="text-gray-400 hover:text-gray-600">
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 p-3 rounded">
-                <p className="text-sm text-gray-600">Student ID</p>
-                <p className="font-medium">{selectedStudent.id}</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <p className="text-sm text-gray-600">Mobile</p>
-                <p className="font-medium">{selectedStudent.mobileNumber}</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <p className="text-sm text-gray-600">Grade</p>
-                <p className="font-medium">{selectedStudent.grade}</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <p className="text-sm text-gray-600">Status</p>
-                <p className={`font-medium ${selectedStudent.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                  {selectedStudent.isActive ? 'Active' : 'Inactive'}
-                </p>
-              </div>
-            </div>
-            
-            {studentStats && (
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900">Activity Statistics</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-3 bg-blue-50 rounded">
-                    <p className="text-2xl font-bold text-blue-600">{studentStats.totalLogins}</p>
-                    <p className="text-xs text-gray-600">Total Logins</p>
-                  </div>
-                  <div className="text-center p-3 bg-green-50 rounded">
-                    <p className="text-2xl font-bold text-green-600">{studentStats.totalWatchTime}h</p>
-                    <p className="text-xs text-gray-600">Watch Time</p>
-                  </div>
-                  <div className="text-center p-3 bg-purple-50 rounded">
-                    <p className="text-2xl font-bold text-purple-600">{studentStats.papersCount}</p>
-                    <p className="text-xs text-gray-600">Papers</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="mt-6 flex gap-3">
-              {!selectedStudent.isActive && (
-                <button 
-                  onClick={() => handleActivateStudent(selectedStudent.id)}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-                >
-                  Activate Account
-                </button>
-              )}
+        {/* INLINE FORMS - Appear below the main container with scroll */}
+        
+        {/* Add Class Form */}
+        {activeForm === 'class' && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-blue-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Add New Class</h3>
               <button 
-                onClick={() => setShowStudentProfile(false)}
-                className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300"
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Close
+                <ArrowLeft className="w-4 h-4" />
+                Back
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Activate Student Modal */}
-      {showActivateStudent && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Activate Student Manually</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="form-label">Student ID</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="Enter Student ID"
-                  value={searchStudentId}
-                  onChange={(e) => setSearchStudentId(e.target.value)}
-                />
-              </div>
-              <button 
-                onClick={() => {
-                  handleActivateStudent(searchStudentId);
-                  setShowActivateStudent(false);
-                  setSearchStudentId('');
-                }}
-                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-              >
-                Activate Student
-              </button>
-              <button 
-                onClick={() => setShowActivateStudent(false)}
-                className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Class Modal */}
-      {showAddClass && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Class</h3>
             <form onSubmit={handleAddClass} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="form-label">Class Name (English)</label>
-                  <input name="name" className="form-input" required />
+                  <input name="name" className="form-input w-full" required />
                 </div>
                 <div>
                   <label className="form-label">Class Name (Sinhala)</label>
-                  <input name="nameSinhala" className="form-input sinhala-text" required />
+                  <input name="nameSinhala" className="form-input sinhala-text w-full" required />
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="form-label">Grade</label>
-                  <select name="grade" className="form-input" required>
+                  <select name="grade" className="form-input w-full" required>
                     {[6, 7, 8, 9, 10, 11].map(g => <option key={g} value={g}>Grade {g}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="form-label">Month</label>
-                  <select name="month" className="form-input" required>
+                  <select name="month" className="form-input w-full" required>
                     <option value="">Select Month</option>
                     {months.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="form-label">Type</label>
-                  <select name="type" className="form-input">
+                  <select name="type" className="form-input w-full">
                     <option value="monthly">Monthly</option>
                     <option value="special">Special</option>
                   </select>
@@ -1116,266 +939,198 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
               
               <div>
                 <label className="form-label">Price (Rs.)</label>
-                <input name="price" type="number" className="form-input" required />
+                <input name="price" type="number" className="form-input w-full" required />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="form-label">Description (English)</label>
-                  <textarea name="description" className="form-input" rows={2} />
+                  <textarea name="description" className="form-input w-full" rows={2} />
                 </div>
                 <div>
                   <label className="form-label">Description (Sinhala)</label>
-                  <textarea name="descriptionSinhala" className="form-input sinhala-text" rows={2} />
+                  <textarea name="descriptionSinhala" className="form-input sinhala-text w-full" rows={2} />
                 </div>
               </div>
               
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddClass(false)} className="flex-1 btn-secondary">
+                <button type="button" onClick={() => setActiveForm(null)} className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
+                <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                   Add Class
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Add Content Modal */}
-      {showAddContent && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Add {contentType === 'pdf' ? 'PDF' : contentType === 'recording' ? 'Recording' : contentType === 'zoom' ? 'Zoom Link' : 'Tutorial'}
-            </h3>
-            <form onSubmit={handleAddContent} className="space-y-4">
-              <input type="hidden" name="contentType" value={contentType} />
-              
-              <div>
-                <label className="form-label">Select Class</label>
-                <select name="classId" className="form-input" required defaultValue={selectedClass?.id || ''}>
-                  <option value="">Select Class</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name} (Grade {c.grade})</option>)}
-                </select>
+        {/* Add Lesson Form */}
+        {activeForm === 'lesson' && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-green-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Add New Lesson</h3>
+              <button 
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+            <form onSubmit={handleAddLesson} className="space-y-4">
+              <div className="flex items-center gap-2 mb-4 p-3 bg-green-50 rounded-lg">
+                <input type="checkbox" id="isFree" name="isFree" className="w-4 h-4" />
+                <label htmlFor="isFree" className="text-sm font-medium text-green-900">Free Lesson (No payment required)</label>
               </div>
               
-              <div>
-                <label className="form-label">Month</label>
-                <select name="contentMonth" className="form-input" required>
-                  <option value="">Select Month</option>
-                  {months.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              
-              <div>
-                <label className="form-label">Unit/Headline</label>
-                <input name="unit" className="form-input" placeholder="e.g., Unit 1 - Algebra" required />
-              </div>
-              
-              <div>
-                <label className="form-label">Title</label>
-                <input name="title" className="form-input" required />
-              </div>
-              
-              <div>
-                <label className="form-label">
-                  {contentType === 'pdf' ? 'PDF URL' : contentType === 'recording' ? 'Video URL' : contentType === 'zoom' ? 'Zoom Link' : 'Tutorial Link'}
-                </label>
-                <input name="url" className="form-input" required />
-              </div>
-              
-              <div>
-                <label className="form-label">Description</label>
-                <textarea name="description" className="form-input" rows={2} />
-              </div>
-              
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddContent(false)} className="flex-1 btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  Add Content
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add Notice Modal */}
-      {showAddNotice && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Post Notice</h3>
-            <form onSubmit={handleAddNotice} className="space-y-4">
-              <div>
-                <label className="form-label">Title</label>
-                <input name="title" className="form-input" required />
-              </div>
-              <div>
-                <label className="form-label">Message</label>
-                <textarea name="message" className="form-input" rows={3} required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label">Type</label>
-                  <select name="type" className="form-input">
-                    <option value="general">General</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="payment">Payment</option>
+                  <label className="form-label">Select Class</label>
+                  <select name="classId" className="form-input w-full" defaultValue={selectedClass?.id || ''}>
+                    <option value="">Select Class</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="form-label">Expires At</label>
-                  <input name="expiresAt" type="date" className="form-input" />
-                </div>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddNotice(false)} className="flex-1 btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  Post Notice
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add Lesson Modal */}
-      {showAddLesson && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Add Lesson</h3>
-            <form onSubmit={handleAddLesson} className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <input type="checkbox" id="isFree" name="isFree" className="w-4 h-4" />
-                <label htmlFor="isFree" className="text-sm font-medium text-gray-700">Free Lesson (No payment required)</label>
-              </div>
-              
-              <div>
-                <label className="form-label">Select Class</label>
-                <select name="classId" className="form-input" defaultValue={selectedClass?.id || ''}>
-                  <option value="">Select Class</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              
-              <div>
-                <label className="form-label">Lesson Title (English)</label>
-                <input name="title" className="form-input" required />
-              </div>
-              <div>
-                <label className="form-label">Lesson Title (Sinhala)</label>
-                <input name="titleSinhala" className="form-input sinhala-text" />
-              </div>
-              <div>
-                <label className="form-label">YouTube URL</label>
-                <input name="youtubeUrl" className="form-input" placeholder="https://youtube.com/embed/ ..." required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="form-label">Duration</label>
-                  <input name="duration" className="form-input" placeholder="45 min" />
-                </div>
-                <div>
                   <label className="form-label">Month</label>
-                  <select name="month" className="form-input">
+                  <select name="month" className="form-input w-full">
                     <option value="">Select Month</option>
                     {months.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
               </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Lesson Title (English)</label>
+                  <input name="title" className="form-input w-full" required />
+                </div>
+                <div>
+                  <label className="form-label">Lesson Title (Sinhala)</label>
+                  <input name="titleSinhala" className="form-input sinhala-text w-full" />
+                </div>
+              </div>
+              
+              <div>
+                <label className="form-label">YouTube URL</label>
+                <input name="youtubeUrl" className="form-input w-full" placeholder="https://youtube.com/embed/..." required />
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Duration</label>
+                  <input name="duration" className="form-input w-full" placeholder="45 min" />
+                </div>
+                <div>
+                  <label className="form-label">Order</label>
+                  <input name="order" type="number" className="form-input w-full" defaultValue={1} />
+                </div>
+              </div>
+              
               <div>
                 <label className="form-label">Description</label>
-                <textarea name="description" className="form-input" rows={2} />
+                <textarea name="description" className="form-input w-full" rows={2} />
               </div>
+              
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddLesson(false)} className="flex-1 btn-secondary">
+                <button type="button" onClick={() => setActiveForm(null)} className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
+                <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                   Add Lesson
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Add Live Class Modal */}
-      {showAddLiveClass && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Schedule Live Class</h3>
+        {/* Add Live Class Form */}
+        {activeForm === 'live' && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-purple-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Schedule Live Class</h3>
+              <button 
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
             <form onSubmit={handleAddLiveClass} className="space-y-4">
-              <div>
-                <label className="form-label">Select Class</label>
-                <select name="classId" className="form-input" required>
-                  <option value="">Select Class</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              
-              <div>
-                <label className="form-label">Grade</label>
-                <select name="grade" className="form-input" required>
-                  {[6, 7, 8, 9, 10, 11].map(g => <option key={g} value={g}>Grade {g}</option>)}
-                </select>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Select Class</label>
+                  <select name="classId" className="form-input w-full" required>
+                    <option value="">Select Class</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Grade</label>
+                  <select name="grade" className="form-input w-full" required>
+                    {[6, 7, 8, 9, 10, 11].map(g => <option key={g} value={g}>Grade {g}</option>)}
+                  </select>
+                </div>
               </div>
               
               <div>
                 <label className="form-label">Title</label>
-                <input name="title" className="form-input" placeholder="Live Revision Session" required />
+                <input name="title" className="form-input w-full" placeholder="Live Revision Session" required />
               </div>
               
               <div>
                 <label className="form-label">Zoom Link</label>
-                <input name="zoomLink" className="form-input" placeholder="https://zoom.us/..." required />
+                <input name="zoomLink" className="form-input w-full" placeholder="https://zoom.us/..." required />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="form-label">Scheduled Date & Time</label>
-                  <input name="scheduledAt" type="datetime-local" className="form-input" required />
+                  <input name="scheduledAt" type="datetime-local" className="form-input w-full" required />
                 </div>
                 <div>
                   <label className="form-label">Duration</label>
-                  <input name="duration" className="form-input" placeholder="1 hour" required />
+                  <input name="duration" className="form-input w-full" placeholder="1 hour" required />
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
                 <input type="checkbox" id="enrolledOnly" name="enrolledOnly" defaultChecked className="w-4 h-4" />
-                <label htmlFor="enrolledOnly" className="text-sm text-gray-700">Enrolled students only</label>
+                <label htmlFor="enrolledOnly" className="text-sm text-purple-900 font-medium">Enrolled students only</label>
               </div>
               
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddLiveClass(false)} className="flex-1 btn-secondary">
+                <button type="button" onClick={() => setActiveForm(null)} className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
+                <button type="submit" className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
                   Schedule Class
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Add Marks Modal */}
-      {showAddMarks && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Add Paper & Marks</h3>
+        {/* Add Marks Form */}
+        {activeForm === 'marks' && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-orange-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Add Paper & Marks</h3>
+              <button 
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
             
-            <div className="mb-4 flex gap-2">
+            <div className="mb-4 flex gap-2 p-3 bg-orange-50 rounded-lg">
               <input 
                 type="text" 
-                placeholder="Enter Student ID" 
+                placeholder="Enter Student ID first..." 
                 className="form-input flex-1"
                 value={searchStudentId}
                 onChange={(e) => setSearchStudentId(e.target.value)}
@@ -1383,63 +1138,347 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
               <button 
                 type="button"
                 onClick={handleSearchStudent}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg"
               >
-                Find
+                Find Student
               </button>
             </div>
 
             {selectedStudent && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                <p className="font-medium text-blue-900">{selectedStudent.fullName}</p>
-                <p className="text-sm text-blue-700">ID: {selectedStudent.id} | Grade: {selectedStudent.grade}</p>
+              <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="font-medium text-green-900">{selectedStudent.fullName}</p>
+                <p className="text-sm text-green-700">ID: {selectedStudent.id} | Grade: {selectedStudent.grade}</p>
               </div>
             )}
             
             <form onSubmit={handleAddPaper} className="space-y-4">
               <input type="hidden" name="studentId" value={selectedStudent?.id || ''} />
               
-              <div>
-                <label className="form-label">Select Class</label>
-                <select name="classId" className="form-input" required>
-                  <option value="">Select Class</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Select Class</label>
+                  <select name="classId" className="form-input w-full" required>
+                    <option value="">Select Class</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Paper Name</label>
+                  <input name="name" className="form-input w-full" placeholder="Term Test 1" required />
+                </div>
               </div>
               
-              <div>
-                <label className="form-label">Paper Name</label>
-                <input name="name" className="form-input" placeholder="e.g., Term Test 1 - January" required />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="form-label">Maximum Marks</label>
-                  <input name="maxMarks" type="number" className="form-input" defaultValue={100} required />
+                  <input name="maxMarks" type="number" className="form-input w-full" defaultValue={100} required />
                 </div>
                 <div>
                   <label className="form-label">Student Marks</label>
-                  <input name="marks" type="number" className="form-input" required />
+                  <input name="marks" type="number" className="form-input w-full" required />
                 </div>
               </div>
               
               <div>
                 <label className="form-label">Paper PDF URL (Optional)</label>
-                <input name="paperUrl" className="form-input" placeholder="Link to scanned paper" />
+                <input name="paperUrl" className="form-input w-full" placeholder="Link to scanned paper" />
               </div>
               
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddMarks(false)} className="flex-1 btn-secondary">
+                <button type="button" onClick={() => setActiveForm(null)} className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
+                <button type="submit" className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
                   Add Marks
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Add Notice Form */}
+        {activeForm === 'notice' && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-amber-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Post New Notice</h3>
+              <button 
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+            <form onSubmit={handleAddNotice} className="space-y-4">
+              <div>
+                <label className="form-label">Title</label>
+                <input name="title" className="form-input w-full" required />
+              </div>
+              <div>
+                <label className="form-label">Message</label>
+                <textarea name="message" className="form-input w-full" rows={3} required />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Type</label>
+                  <select name="type" className="form-input w-full">
+                    <option value="general">General</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="payment">Payment</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Expires At</label>
+                  <input name="expiresAt" type="date" className="form-input w-full" />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setActiveForm(null)} className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                  Cancel
+                </button>
+                <button type="submit" className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                  Post Notice
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Add Content Form (PDF/Zoom/Recording) */}
+        {activeForm === 'content' && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-pink-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Add {contentType === 'pdf' ? 'PDF' : contentType === 'recording' ? 'Recording' : contentType === 'zoom' ? 'Zoom Link' : 'Tutorial'}</h3>
+              <button 
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+            
+            <div className="mb-4 flex gap-2">
+              <button 
+                type="button"
+                onClick={() => setContentType('pdf')}
+                className={`px-4 py-2 rounded-lg ${contentType === 'pdf' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+              >
+                PDF
+              </button>
+              <button 
+                type="button"
+                onClick={() => setContentType('recording')}
+                className={`px-4 py-2 rounded-lg ${contentType === 'recording' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+              >
+                Recording
+              </button>
+              <button 
+                type="button"
+                onClick={() => setContentType('zoom')}
+                className={`px-4 py-2 rounded-lg ${contentType === 'zoom' ? 'bg-orange-600 text-white' : 'bg-gray-200'}`}
+              >
+                Zoom
+              </button>
+              <button 
+                type="button"
+                onClick={() => setContentType('tutorial')}
+                className={`px-4 py-2 rounded-lg ${contentType === 'tutorial' ? 'bg-pink-600 text-white' : 'bg-gray-200'}`}
+              >
+                Tutorial
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddContent} className="space-y-4">
+              <input type="hidden" name="contentType" value={contentType} />
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Select Class</label>
+                  <select name="classId" className="form-input w-full" required defaultValue={selectedClass?.id || ''}>
+                    <option value="">Select Class</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.name} (Grade {c.grade})</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Month</label>
+                  <select name="contentMonth" className="form-input w-full" required>
+                    <option value="">Select Month</option>
+                    {months.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="form-label">Unit/Headline</label>
+                <input name="unit" className="form-input w-full" placeholder="e.g., Unit 1 - Algebra" required />
+              </div>
+              
+              <div>
+                <label className="form-label">Title</label>
+                <input name="title" className="form-input w-full" required />
+              </div>
+              
+              <div>
+                <label className="form-label">
+                  {contentType === 'pdf' ? 'PDF URL' : contentType === 'recording' ? 'Video URL' : contentType === 'zoom' ? 'Zoom Link' : 'Tutorial Link'}
+                </label>
+                <input name="url" className="form-input w-full" required />
+              </div>
+              
+              <div>
+                <label className="form-label">Description</label>
+                <textarea name="description" className="form-input w-full" rows={2} />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setActiveForm(null)} className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                  Cancel
+                </button>
+                <button type="submit" className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700">
+                  Add Content
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Activate Student Form */}
+        {activeForm === 'activate' && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-teal-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Activate Student Manually</h3>
+              <button 
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+            
+            <div className="max-w-md mx-auto">
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  Enter the Student ID to manually activate their account. This is useful for expired classes or special cases.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="form-label">Student ID</label>
+                  <input 
+                    type="text" 
+                    className="form-input w-full" 
+                    placeholder="Enter Student ID"
+                    value={searchStudentId}
+                    onChange={(e) => setSearchStudentId(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setActiveForm(null)}
+                    className="flex-1 px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      handleActivateStudent(searchStudentId);
+                      setActiveForm(null);
+                      setSearchStudentId('');
+                    }}
+                    className="flex-1 px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                  >
+                    Activate Student
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Student Profile View */}
+        {activeForm === 'profile' && selectedStudent && (
+          <div ref={formRef} className="mt-6 bg-white rounded-xl shadow-lg border-t-4 border-indigo-500 p-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Student Profile</h3>
+              <button 
+                onClick={() => setActiveForm(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to List
+              </button>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-2">Personal Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <p><span className="text-gray-600">Name:</span> {selectedStudent.fullName}</p>
+                    <p><span className="text-gray-600">Student ID:</span> {selectedStudent.id}</p>
+                    <p><span className="text-gray-600">Email:</span> {selectedStudent.email}</p>
+                    <p><span className="text-gray-600">Mobile:</span> {selectedStudent.mobileNumber}</p>
+                    <p><span className="text-gray-600">Grade:</span> {selectedStudent.grade}</p>
+                    <p>
+                      <span className="text-gray-600">Status:</span>
+                      <span className={`ml-2 px-2 py-1 rounded text-xs ${selectedStudent.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {selectedStudent.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                
+                {!selectedStudent.isActive && (
+                  <button 
+                    onClick={() => handleActivateStudent(selectedStudent.id)}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Activate Account
+                  </button>
+                )}
+              </div>
+              
+              {studentStats && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-3">Activity Statistics</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white p-3 rounded text-center">
+                        <p className="text-2xl font-bold text-blue-600">{studentStats.totalLogins}</p>
+                        <p className="text-xs text-gray-600">Total Logins</p>
+                      </div>
+                      <div className="bg-white p-3 rounded text-center">
+                        <p className="text-2xl font-bold text-green-600">{studentStats.totalWatchTime}h</p>
+                        <p className="text-xs text-gray-600">Watch Time</p>
+                      </div>
+                      <div className="bg-white p-3 rounded text-center">
+                        <p className="text-2xl font-bold text-purple-600">{studentStats.papersCount}</p>
+                        <p className="text-xs text-gray-600">Papers</p>
+                      </div>
+                      <div className="bg-white p-3 rounded text-center">
+                        <p className="text-lg font-bold text-orange-600">{studentStats.lastActive}</p>
+                        <p className="text-xs text-gray-600">Last Active</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}</style>
     </section>
   );
 };
