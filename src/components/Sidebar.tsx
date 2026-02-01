@@ -117,22 +117,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate, currentP
           })}
         </nav>
         
-        {/* Footer */}
+        {/* Footer - Profile Link එක මෙතන තියෙන්නේ */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700 bg-blue-900/50">
           {currentUser ? (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
+            <button 
+              onClick={() => handleNavigation('profile')}
+              className="w-full flex items-center gap-3 hover:bg-white/10 p-2 rounded-xl transition-all text-left"
+            >
+              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center border-2 border-amber-300 shadow-lg">
                 <span className="text-white font-bold text-sm">
                   {currentUser.fullName.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-medium truncate">{currentUser.fullName}</p>
-                <p className="text-blue-300 text-xs">{currentUser.id}</p>
+                <p className="text-blue-300 text-[10px] font-mono uppercase">My Profile (QR)</p>
               </div>
-            </div>
+            </button>
           ) : isAdmin ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 p-2">
               <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
                 <UserCog className="w-5 h-5 text-white" />
               </div>
