@@ -14,6 +14,11 @@ export interface Student {
   paymentStatus: 'pending' | 'approved' | 'rejected';
   registeredAt: string;
   isActive: boolean;
+  // NEW FIELDS ADDED:
+  nicNumber?: string;
+  gender?: string;
+  parentName?: string;
+  parentPhone?: string;
 }
 
 // Class/Course Types
