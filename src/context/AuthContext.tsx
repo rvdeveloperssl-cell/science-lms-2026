@@ -27,13 +27,19 @@ interface AuthContextType {
   refreshUser: () => void;
 }
 
-interface RegisterData {
+// UPDATE: Added new fields to RegisterData
+export interface RegisterData {
   fullName: string;
   mobileNumber: string;
   email?: string;
   grade: number;
   password: string;
   bankSlipUrl?: string;
+  // NEW FIELDS:
+  nicNumber?: string;
+  gender?: string;
+  parentName?: string;
+  parentPhone?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,11 +107,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: false, message: 'Invalid mobile number format' };
     }
 
+    // Validate NIC format (Old and New) - Optional validation
+    if (studentData.nicNumber) {
+      const oldNicRegex = /^[0-9]{9}[vVxX]$/;
+      const newNicRegex = /^[0-9]{12}$/;
+      if (!oldNicRegex.test(studentData.nicNumber) && !newNicRegex.test(studentData.nicNumber)) {
+        return { success: false, message: 'Invalid NIC number format' };
+      }
+    }
+
     // Check if mobile number already exists
     const existingStudents = getStudents();
     const existingStudent = existingStudents.find(s => s.mobileNumber === studentData.mobileNumber);
     if (existingStudent) {
       return { success: false, message: 'Mobile number already registered' };
+    }
+
+    // Check if NIC already exists (if provided)
+    if (studentData.nicNumber) {
+      const existingNic = existingStudents.find(s => s.nicNumber === studentData.nicNumber);
+      if (existingNic) {
+        return { success: false, message: 'NIC number already registered' };
+      }
     }
 
     try {
@@ -115,7 +138,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: studentData.email,
         grade: studentData.grade,
         password: studentData.password,
-        bankSlipUrl: studentData.bankSlipUrl
+        bankSlipUrl: studentData.bankSlipUrl,
+        // NEW FIELDS - pass to store:
+        nicNumber: studentData.nicNumber,
+        gender: studentData.gender,
+        parentName: studentData.parentName,
+        parentPhone: studentData.parentPhone
       });
 
       return { 
