@@ -12,39 +12,40 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onNavigate }) => {
-  // පේන්න තියෙන tabs දෙක පමණක් මෙහි තබා ඇත
   const [activeTab, setActiveTab] = useState<'student' | 'register'>('student');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
-  // Login form state - දෙපාර්ශවයටම පොදුයි
+  // Login form state
   const [loginData, setLoginData] = useState({
     studentId: '',
     password: ''
   });
   
-  // Register form state
+  // Register form state - NEW FIELDS ADDED
   const [registerData, setRegisterData] = useState({
     fullName: '',
     mobileNumber: '',
     email: '',
+    nicNumber: '',           // NEW: NIC Number
+    gender: '',              // NEW: Gender
     grade: 6,
     password: '',
     confirmPassword: '',
+    parentName: '',          // NEW: Parent/Guardian Name
+    parentPhone: '',         // NEW: Parent/Guardian Phone
     bankSlip: null as File | null
   });
 
   const { login, adminLogin, register } = useAuth();
 
-  // ඒකාබද්ධ ලොගින් පද්ධතිය
   const handleIntegratedLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
     setTimeout(() => {
-      // පළමුව Admin කෙනෙක්ද කියා පරීක්ෂා කිරීම
       if (loginData.studentId.toLowerCase() === 'admin' && loginData.password === 'kalana2026') {
         const success = adminLogin(loginData.studentId, loginData.password);
         if (success) {
@@ -55,7 +56,6 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
         }
       }
 
-      // Admin නොවන්නේ නම් ශිෂ්‍යයෙක් ලෙස පරීක්ෂා කිරීම
       const success = login(loginData.studentId, loginData.password);
       if (success) {
         setMessage({ type: 'success', text: 'Login successful!' });
@@ -85,6 +85,11 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
         email: registerData.email || undefined,
         grade: registerData.grade,
         password: registerData.password,
+        // NEW FIELDS passed to register function
+        nicNumber: registerData.nicNumber,
+        gender: registerData.gender,
+        parentName: registerData.parentName,
+        parentPhone: registerData.parentPhone,
         bankSlipUrl: registerData.bankSlip ? URL.createObjectURL(registerData.bankSlip) : undefined
       });
 
@@ -116,23 +121,21 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* Tabs - Admin Tab එක ඉවත් කර ඇත */}
+        {/* Tabs */}
         <div className="flex justify-center mb-8">
           <div className="bg-gray-100 p-1 rounded-lg flex">
             <button
               onClick={() => setActiveTab('student')}
               className={`px-6 py-2 rounded-md font-medium transition-all ${
                 activeTab === 'student' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600'
-              }`}
-            >
+              }`}>
               Student Login
             </button>
             <button
               onClick={() => setActiveTab('register')}
               className={`px-6 py-2 rounded-md font-medium transition-all ${
                 activeTab === 'register' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600'
-              }`}
-            >
+              }`}>
               Register
             </button>
           </div>
@@ -178,8 +181,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
@@ -188,8 +190,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary flex items-center justify-center gap-2"
-              >
+                className="w-full btn-primary flex items-center justify-center gap-2">
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
@@ -204,6 +205,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 
           {activeTab === 'register' && (
             <form onSubmit={handleRegister} className="space-y-6">
+              {/* Row 1: Full Name & Mobile */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="form-label">Full Name *</label>
@@ -228,7 +230,94 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                   />
                 </div>
               </div>
-              
+
+              {/* Row 2: Email & NIC */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="form-label">Email Address *</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={registerData.email}
+                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                    className="form-input"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="form-label">NIC Number *</label>
+                  <input
+                    type="text"
+                    placeholder="2001xxxxxxxV / 99xxxxxxxV"
+                    value={registerData.nicNumber}
+                    onChange={(e) => setRegisterData({ ...registerData, nicNumber: e.target.value })}
+                    className="form-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Row 3: Gender & Grade */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="form-label">Gender *</label>
+                  <select
+                    value={registerData.gender}
+                    onChange={(e) => setRegisterData({ ...registerData, gender: e.target.value })}
+                    className="form-input"
+                    required
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Grade *</label>
+                  <select
+                    value={registerData.grade}
+                    onChange={(e) => setRegisterData({ ...registerData, grade: Number(e.target.value) })}
+                    className="form-input"
+                    required
+                  >
+                    {[6, 7, 8, 9, 10, 11].map((g) => (
+                      <option key={g} value={g}>Grade {g}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 4: Parent/Guardian Details */}
+              <div className="border-t pt-6 mt-6">
+                <h4 className="text-sm font-semibold text-gray-700 mb-4">Parent / Guardian Details</h4>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="form-label">Parent/Guardian Name *</label>
+                    <input
+                      type="text"
+                      placeholder="Father's/Mother's name"
+                      value={registerData.parentName}
+                      onChange={(e) => setRegisterData({ ...registerData, parentName: e.target.value })}
+                      className="form-input"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Parent/Guardian Phone *</label>
+                    <input
+                      type="tel"
+                      placeholder="07x xxxxxxx"
+                      value={registerData.parentPhone}
+                      onChange={(e) => setRegisterData({ ...registerData, parentPhone: e.target.value })}
+                      className="form-input"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 5: Password & Confirm */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="form-label">Password *</label>
@@ -258,8 +347,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-gold flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
-              >
+                className="w-full btn-gold flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">
                 {loading ? "Registering..." : "Register Now"}
               </button>
             </form>
