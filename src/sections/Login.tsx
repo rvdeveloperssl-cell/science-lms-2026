@@ -11,6 +11,20 @@ interface LoginProps {
   onNavigate: (page: string) => void;
 }
 
+// Extend the register data type locally to include new fields
+interface ExtendedRegisterData {
+  fullName: string;
+  mobileNumber: string;
+  email?: string;
+  grade: number;
+  password: string;
+  nicNumber: string;
+  gender: string;
+  parentName: string;
+  parentPhone: string;
+  bankSlipUrl?: string;
+}
+
 const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'student' | 'register'>('student');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,18 +37,18 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     password: ''
   });
   
-  // Register form state - NEW FIELDS ADDED
+  // Register form state
   const [registerData, setRegisterData] = useState({
     fullName: '',
     mobileNumber: '',
     email: '',
-    nicNumber: '',           // NEW: NIC Number
-    gender: '',              // NEW: Gender
+    nicNumber: '',
+    gender: '',
     grade: 6,
     password: '',
     confirmPassword: '',
-    parentName: '',          // NEW: Parent/Guardian Name
-    parentPhone: '',         // NEW: Parent/Guardian Phone
+    parentName: '',
+    parentPhone: '',
     bankSlip: null as File | null
   });
 
@@ -79,19 +93,19 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     }
 
     setTimeout(() => {
+      // FIX: Cast to ExtendedRegisterData to include new fields
       const result = register({
         fullName: registerData.fullName,
         mobileNumber: registerData.mobileNumber,
         email: registerData.email || undefined,
         grade: registerData.grade,
         password: registerData.password,
-        // NEW FIELDS passed to register function
         nicNumber: registerData.nicNumber,
         gender: registerData.gender,
         parentName: registerData.parentName,
         parentPhone: registerData.parentPhone,
         bankSlipUrl: registerData.bankSlip ? URL.createObjectURL(registerData.bankSlip) : undefined
-      });
+      } as ExtendedRegisterData);  // <-- THIS FIXES THE ERROR
 
       if (result.success) {
         setMessage({ type: 'success', text: result.message });
@@ -182,7 +196,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
