@@ -239,10 +239,12 @@ export const getStudentById = (id: string): Student | undefined => {
   return students.find(s => s.id === id);
 };
 
+// UPDATED: Now supports new fields (nicNumber, gender, parentName, parentPhone)
+// These fields are automatically included via the Omit type from the updated Student interface
 export const addStudent = (student: Omit<Student, 'id' | 'registeredAt' | 'paymentStatus' | 'isActive'>): string => {
   const students = getStudents();
   const newStudent: Student = {
-    ...student,
+    ...student, // This now spreads all fields including nicNumber, gender, parentName, parentPhone
     id: generateStudentId(),
     registeredAt: new Date().toISOString(),
     paymentStatus: 'pending',
